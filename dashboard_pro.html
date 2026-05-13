@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlipperHub Cloud — Dashboard</title>
+<style>
+:root {
+  --bg:      #0a0e1a;
+  --bg2:     #111827;
+  --bg3:     #1f2937;
+  --border:  #2d3748;
+  --text:    #f1f5f9;
+  --muted:   #64748b;
+  --blue:    #3b82f6;
+  --green:   #22c55e;
+  --purple:  #a855f7;
+  --amber:   #f59e0b;
+  --red:     #ef4444;
+  --teal:    #14b8a6;
+  --cyan:    #06b6d4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh}
+
+/* NAV */
+nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.nav-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.nav-logo{width:32px;height:32px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.nav-right{display:flex;align-items:center;gap:16px}
+.online-badge{display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid var(--border)}
+.online-badge.on{border-color:var(--green);color:var(--green);background:#052e16}
+.online-badge.off{border-color:var(--red);color:var(--red);background:#1f0707}
+.pulse{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.last-sync{font-size:11px;color:var(--muted)}
+
+/* MAIN */
+main{padding:24px;max-width:1280px;margin:0 auto}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;transition:border-color .2s}
+.stat:hover{border-color:var(--accent)}
+.stat-accent{position:absolute;top:0;left:0;right:0;height:3px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.stat-val{font-size:32px;font-weight:700;line-height:1;margin-bottom:4px}
+.stat-sub{font-size:11px;color:var(--muted)}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+
+/* PANEL */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.panel-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.count-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+.panel-body{padding:16px}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:10px;color:var(--muted);text-align:left;padding:0 8px 10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+.tbl td{padding:8px;border-bottom:1px solid #1a2234;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#131c2e}
+.mono{font-family:'Cascadia Code','Fira Code',monospace;font-size:11px}
+
+/* SIGNAL BAR */
+.sig{display:flex;align-items:center;gap:6px}
+.sig-bar{flex:1;height:4px;background:var(--bg3);border-radius:2px;max-width:80px}
+.sig-fill{height:4px;border-radius:2px;transition:width .4s}
+.sig-val{font-size:10px;color:var(--muted);white-space:nowrap}
+
+/* DEVICE INFO */
+.device-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.di{background:var(--bg3);border-radius:8px;padding:12px}
+.di-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.di-val{font-size:14px;font-weight:600}
+
+/* BATTERY */
+.bat{display:flex;align-items:center;gap:8px}
+.bat-bar{flex:1;height:8px;background:var(--bg);border-radius:4px;border:1px solid var(--border)}
+.bat-fill{height:6px;border-radius:3px;margin:1px;transition:width .6s}
+
+/* LOGS */
+.log-wrap{max-height:260px;overflow-y:auto}
+.log-wrap::-webkit-scrollbar{width:4px}
+.log-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.log-item{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid #1a2234;align-items:flex-start}
+.log-item:last-child{border-bottom:none}
+.log-time{font-family:monospace;font-size:10px;color:var(--muted);white-space:nowrap;margin-top:1px}
+.log-tag{font-size:10px;font-weight:600;padding:1px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.log-msg{font-size:12px;color:var(--text);line-height:1.4}
+
+/* TAGS */
+.tag-wifi  {background:#0c1d3d;color:var(--blue)}
+.tag-ble   {background:#1d0c3d;color:var(--purple)}
+.tag-rfid  {background:#052e16;color:var(--green)}
+.tag-ir    {background:#2d1a00;color:var(--amber)}
+.tag-system{background:#1a0505;color:var(--red)}
+.tag-alert {background:#1a0505;color:var(--red);animation:flash 1s infinite}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* BADGES */
+.badge-blue  {background:#0c1d3d;color:var(--blue);border:1px solid #1e3a6e}
+.badge-purple{background:#1d0c3d;color:var(--purple);border:1px solid #3d1a6e}
+.badge-green {background:#052e16;color:var(--green);border:1px solid #166534}
+.badge-amber {background:#2d1a00;color:var(--amber);border:1px solid #6e3a00}
+.badge-red   {background:#1a0505;color:var(--red);border:1px solid #6e1a1a}
+
+/* EMPTY */
+.empty{color:var(--muted);font-size:12px;text-align:center;padding:32px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.empty-icon{font-size:32px;opacity:.4}
+
+/* API CONFIG */
+.api-config{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.api-config input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;font-family:monospace;outline:none}
+.api-config input:focus{border-color:var(--blue)}
+.btn{padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-muted{background:var(--bg3);color:var(--muted);border:1px solid var(--border)}
+
+@media(max-width:900px){
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .stats{grid-template-columns:1fr 1fr}
+  main{padding:12px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">🐬</div>
+    FlipperHub Cloud
+  </div>
+  <div class="nav-right">
+    <div class="online-badge off" id="statusBadge">
+      <div class="pulse"></div>
+      <span id="statusText">Conectando...</span>
+    </div>
+    <div class="last-sync" id="lastSync">—</div>
+  </div>
+</nav>
+
+<main>
+
+  <!-- API Config -->
+  <div class="api-config">
+    <span style="color:var(--muted);font-size:12px;white-space:nowrap">🔗 API URL:</span>
+    <input type="text" id="apiUrl" placeholder="https://tu-api.railway.app" />
+    <button class="btn btn-blue" onclick="saveAndReload()">Conectar</button>
+    <button class="btn btn-muted" onclick="testApi()">Probar</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat" style="--accent:var(--blue)">
+      <div class="stat-accent" style="background:var(--blue)"></div>
+      <div class="stat-label">Redes WiFi</div>
+      <div class="stat-val" id="sWifi" style="color:var(--blue)">—</div>
+      <div class="stat-sub">escaneadas</div>
+    </div>
+    <div class="stat" style="--accent:var(--purple)">
+      <div class="stat-accent" style="background:var(--purple)"></div>
+      <div class="stat-label">Dispositivos BLE</div>
+      <div class="stat-val" id="sBle" style="color:var(--purple)">—</div>
+      <div class="stat-sub">detectados</div>
+    </div>
+    <div class="stat" style="--accent:var(--green)">
+      <div class="stat-accent" style="background:var(--green)"></div>
+      <div class="stat-label">Tarjetas RFID</div>
+      <div class="stat-val" id="sRfid" style="color:var(--green)">—</div>
+      <div class="stat-sub">leídas</div>
+    </div>
+    <div class="stat" style="--accent:var(--amber)">
+      <div class="stat-accent" style="background:var(--amber)"></div>
+      <div class="stat-label">Señales IR</div>
+      <div class="stat-val" id="sIr" style="color:var(--amber)">—</div>
+      <div class="stat-sub">capturadas</div>
+    </div>
+    <div class="stat" style="--accent:var(--red)">
+      <div class="stat-accent" style="background:var(--red)"></div>
+      <div class="stat-label">Alertas</div>
+      <div class="stat-val" id="sAlerts" style="color:var(--red)">—</div>
+      <div class="stat-sub">eventos críticos</div>
+    </div>
+  </div>
+
+  <!-- Row 1: WiFi + BLE -->
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <div class="panel-icon" style="background:#0c1d3d">📡</div>
+          Redes WiFi escaneadas
+        </div>
+        <span class="count-badge badge-blue" id="wifiCount">0</span>
+      </div>
+      <div class="panel-body" id="wifiList">
+        <div class="empty"><div class="empty-icon">📡</div>Sin datos</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <div class="panel-icon" style="background:#1d0c3d">🔵</div>
+          Radar BLE
+        </div>
+        <span class="count-badge badge-purple" id="bleCount">0</span>
+      </div>
+      <div class="panel-body">
+        <table class="tbl">
+          <thead><tr><th>MAC</th><th>Nombre</th><th>Señal</th><th>Hora</th></tr></thead>
+          <tbody id="bleTable"><tr><td colspan="4"><div class="empty"><div class="empty-icon">🔵</div>Sin datos</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: RFID + IR -->
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <div class="panel-icon" style="background:#052e16">💳</div>
+          Tarjetas RFID / NFC
+        </div>
+        <span class="count-badge badge-green" id="rfidCount">0</span>
+      </div>
+      <div class="panel-body">
+        <table class="tbl">
+          <thead><tr><th>UID</th><th>Tipo</th><th>Hora</th></tr></thead>
+          <tbody id="rfidTable"><tr><td colspan="3"><div class="empty"><div class="empty-icon">💳</div>Sin datos</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <div class="panel-icon" style="background:#2d1a00">🔴</div>
+          Señales IR
+        </div>
+        <span class="count-badge badge-amber" id="irCount">0</span>
+      </div>
+      <div class="panel-body">
+        <table class="tbl">
+          <thead><tr><th>Protocolo</th><th>Hex</th><th>Bits</th><th>Hora</th></tr></thead>
+          <tbody id="irTable"><tr><td colspan="4"><div class="empty"><div class="empty-icon">🔴</div>Sin datos</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Device + Logs -->
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <div class="panel-icon" style="background:#0a1628">⚙️</div>
+          Estado del dispositivo
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="device-grid">
+          <div class="di">
+            <div class="di-label">Batería</div>
+            <div class="bat">
+              <div class="bat-bar"><div class="bat-fill" id="batFill" style="width:0%"></div></div>
+              <span class="di-val" id="dBat">—</span>
+            </div>
+          </div>
+          <div class="di">
+            <div class="di-label">IP del dispositivo</div>
+            <div class="di-val mono" id="dIp">—</div>
+          </div>
+          <div class="di">
+            <div class="di-label">Módulo activo</div>
+            <div class="di-val" id="dMod">—</div>
+          </div>
+          <div class="di">
+            <div class="di-label">Uptime</div>
+            <div class="di-val" id="dUp">—</div>
+          </div>
+          <div class="di">
+            <div class="di-label">Firmware</div>
+            <div class="di-val" id="dFw">—</div>
+          </div>
+          <div class="di">
+            <div class="di-label">Archivos en SD</div>
+            <div class="di-val" id="dSd">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <div class="panel-icon" style="background:#1a0505">🔴</div>
+          Log en vivo
+        </div>
+        <button class="btn btn-muted" onclick="clearLogs()" style="font-size:10px;padding:3px 8px">Limpiar</button>
+      </div>
+      <div class="panel-body" style="padding:8px 12px">
+        <div class="log-wrap" id="logList">
+          <div class="empty"><div class="empty-icon">📋</div>Sin eventos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let API = localStorage.getItem('flipper_api') || '';
+if (API) $('apiUrl').value = API;
+
+function saveAndReload() {
+  API = $('apiUrl').value.trim().replace(/\/$/, '');
+  localStorage.setItem('flipper_api', API);
+  fetchAll();
+}
+
+async function testApi() {
+  if (!API) return alert('Ingresa la URL de la API primero');
+  try {
+    const r = await fetch(API + '/health');
+    const d = await r.json();
+    alert('✅ API conectada: ' + JSON.stringify(d));
+  } catch(e) {
+    alert('❌ No se pudo conectar: ' + e.message);
+  }
+}
+
+function setOnline(on) {
+  const b = $('statusBadge');
+  b.className = 'online-badge ' + (on ? 'on' : 'off');
+  $('statusText').textContent = on ? 'Dispositivo online' : 'Sin conexión';
+}
+
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function rssiColor(r) {
+  return r > -60 ? '#22c55e' : r > -75 ? '#f59e0b' : '#ef4444';
+}
+
+function rssiPct(r) {
+  return Math.max(0, Math.min(100, 100 + r));
+}
+
+function renderWifi(data) {
+  $('wifiCount').textContent = data.length;
+  $('sWifi').textContent = data.length;
+  if (!data.length) { $('wifiList').innerHTML = '<div class="empty"><div class="empty-icon">📡</div>Sin redes</div>'; return; }
+  $('wifiList').innerHTML = data.slice(0,10).map(n => `
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span style="font-weight:500">${n.ssid}</span>
+        <span style="color:var(--muted);font-family:monospace">${n.rssi} dBm · CH${n.channel||'?'}</span>
+      </div>
+      <div style="background:var(--bg3);border-radius:3px;height:5px">
+        <div style="width:${rssiPct(n.rssi)}%;height:5px;border-radius:3px;background:${rssiColor(n.rssi)};transition:width .4s"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderBle(data) {
+  $('bleCount').textContent = data.length;
+  $('sBle').textContent = data.length;
+  if (!data.length) { $('bleTable').innerHTML = '<tr><td colspan="4"><div class="empty"><div class="empty-icon">🔵</div>Sin dispositivos</div></td></tr>'; return; }
+  $('bleTable').innerHTML = data.slice(0,8).map(d => `
+    <tr>
+      <td class="mono" style="color:var(--purple)">${d.mac}</td>
+      <td>${d.name || '<span style="color:var(--muted)">Desconocido</span>'}</td>
+      <td><div class="sig">
+        <div class="sig-bar"><div class="sig-fill" style="width:${rssiPct(d.rssi)}%;background:${rssiColor(d.rssi)}"></div></div>
+        <span class="sig-val">${d.rssi}dBm</span>
+      </div></td>
+      <td style="color:var(--muted)">${fmtTime(d.timestamp)}</td>
+    </tr>`).join('');
+}
+
+function renderRfid(data) {
+  $('rfidCount').textContent = data.length;
+  $('sRfid').textContent = data.length;
+  if (!data.length) { $('rfidTable').innerHTML = '<tr><td colspan="3"><div class="empty"><div class="empty-icon">💳</div>Sin tarjetas</div></td></tr>'; return; }
+  $('rfidTable').innerHTML = data.slice(0,8).map(d => `
+    <tr>
+      <td class="mono" style="color:var(--green)">${d.uid}</td>
+      <td><span class="count-badge badge-green">${d.type||'RFID'}</span></td>
+      <td style="color:var(--muted)">${fmtTime(d.timestamp)}</td>
+    </tr>`).join('');
+}
+
+function renderIr(data) {
+  $('irCount').textContent = data.length;
+  $('sIr').textContent = data.length;
+  if (!data.length) { $('irTable').innerHTML = '<tr><td colspan="4"><div class="empty"><div class="empty-icon">🔴</div>Sin señales</div></td></tr>'; return; }
+  $('irTable').innerHTML = data.slice(0,8).map(d => `
+    <tr>
+      <td><span class="count-badge badge-amber">${d.protocol||'RAW'}</span></td>
+      <td class="mono" style="color:var(--amber)">${d.hex}</td>
+      <td style="color:var(--muted)">${d.bits||'?'}</td>
+      <td style="color:var(--muted)">${fmtTime(d.timestamp)}</td>
+    </tr>`).join('');
+}
+
+function renderStatus(s) {
+  const bat = s.battery || 0;
+  const batColor = bat > 50 ? 'var(--green)' : bat > 20 ? 'var(--amber)' : 'var(--red)';
+  $('dBat').textContent = bat + '%';
+  $('dBat').style.color = batColor;
+  $('batFill').style.width = bat + '%';
+  $('batFill').style.background = batColor;
+  $('dIp').textContent  = s.ip || '—';
+  $('dMod').textContent = s.active_module || '—';
+  $('dUp').textContent  = s.uptime || '—';
+  $('dFw').textContent  = s.firmware || '—';
+  $('dSd').textContent  = s.sd_files != null ? s.sd_files + ' archivos' : '—';
+}
+
+function renderLogs(logs) {
+  $('sAlerts').textContent = logs.filter(l => l.level === 'alert').length;
+  if (!logs.length) { $('logList').innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Sin eventos</div>'; return; }
+  const tags = {wifi:'tag-wifi',ble:'tag-ble',rfid:'tag-rfid',ir:'tag-ir',system:'tag-system'};
+  $('logList').innerHTML = logs.slice(0,50).map(l => `
+    <div class="log-item">
+      <span class="log-time">${fmtTime(l.timestamp)}</span>
+      <span class="log-tag ${l.level==='alert'?'tag-alert':(tags[l.module]||'tag-system')}">${l.module.toUpperCase()}</span>
+      <span class="log-msg">${l.message}</span>
+    </div>`).join('');
+}
+
+async function fetchAll() {
+  if (!API) { setOnline(false); return; }
+  try {
+    const [status, wifi, ble, rfid, ir, logs, stats] = await Promise.all([
+      fetch(API+'/status').then(r=>r.json()),
+      fetch(API+'/logs/wifi').then(r=>r.json()),
+      fetch(API+'/logs/ble').then(r=>r.json()),
+      fetch(API+'/logs/rfid').then(r=>r.json()),
+      fetch(API+'/logs/ir').then(r=>r.json()),
+      fetch(API+'/logs').then(r=>r.json()),
+      fetch(API+'/stats').then(r=>r.json()),
+    ]);
+    setOnline(true);
+    renderStatus(status);
+    renderWifi(wifi);
+    renderBle(ble);
+    renderRfid(rfid);
+    renderIr(ir);
+    renderLogs(logs);
+    $('lastSync').textContent = 'Sync: ' + new Date().toLocaleTimeString('es-MX');
+  } catch(e) {
+    setOnline(false);
+    $('lastSync').textContent = 'Error — reintentando...';
+  }
+}
+
+function clearLogs() {
+  $('logList').innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Sin eventos</div>';
+}
+
+// Arrancar
+fetchAll();
+setInterval(fetchAll, 5000);
+</script>
+</body>
+</html>
