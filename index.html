@@ -337,9 +337,9 @@ async function testApi() {
   try {
     const r = await fetch(API + '/health');
     const d = await r.json();
-    alert('✅ API conectada: ' + JSON.stringify(d));
+    alert('API conectada: ' + JSON.stringify(d));
   } catch(e) {
-    alert('❌ No se pudo conectar: ' + e.message);
+    alert('No se pudo conectar: ' + e.message);
   }
 }
 
@@ -381,10 +381,18 @@ function renderBle(data) {
   $('bleCount').textContent = data.length;
   $('sBle').textContent = data.length;
   if (!data.length) { $('bleTable').innerHTML = '<tr><td colspan="4"><div class="empty"><div class="empty-icon">🔵</div>Sin dispositivos</div></td></tr>'; return; }
+  
+  $('bleTable').previousElementSibling.innerHTML = '<tr><th>MAC</th><th>Dispositivo / Fabricante</th><th>Señal</th><th>Hora</th></tr>';
+  
   $('bleTable').innerHTML = data.slice(0,8).map(d => `
     <tr>
       <td class="mono" style="color:var(--purple)">${d.mac}</td>
-      <td>${d.name || '<span style="color:var(--muted)">Desconocido</span>'}</td>
+      <td>
+        <div style="font-weight:600">${d.name || '<span style="color:var(--muted)">Desconocido</span>'}</div>
+        <div style="font-size:10px;color:var(--cyan);margin-top:2px;text-transform:uppercase">
+          ${d.manufacturer || 'GENÉRICO / IOT'}
+        </div>
+      </td>
       <td><div class="sig">
         <div class="sig-bar"><div class="sig-fill" style="width:${rssiPct(d.rssi)}%;background:${rssiColor(d.rssi)}"></div></div>
         <span class="sig-val">${d.rssi}dBm</span>
